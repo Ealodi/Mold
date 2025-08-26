@@ -41,7 +41,7 @@
       <el-button-group>
         <el-button @click="showAddWin" type="primary" >新增</el-button>
         <el-button type="danger">删除</el-button>
-        <el-button type="primary">导出</el-button>
+        <el-button @click="exportCsv" type="primary">导出</el-button>
       </el-button-group>
     </el-col>
   </el-row>
@@ -283,6 +283,34 @@ function loadClients(){
 function handlePageChange(page){
   searchObj.pageNum = page;
   loadClients();
+}
+// 导出为CSV
+function exportCsv(){
+
+  axios.get("http://localhost:9090/client/list?pageNum=1" + "&pageSize=" + total.value).then(res=>{
+    if(res.data.code == '200'){
+      const header =  ["客户姓名", "手机号", "地址", "邮箱"];
+      const rows = res.data.data.map(row => [
+            row.clientName,
+            row.phoneNumber,
+            row.address,
+            row.email
+      ]);
+      const csvContent =
+          header.join(",") + "\n" +
+          rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "客户信息.csv");
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  });
 }
 onMounted(() => {
   loadClients();

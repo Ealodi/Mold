@@ -74,7 +74,7 @@
       <el-button-group>
         <el-button @click="showAddWin" type="primary">新增</el-button>
         <el-button type="danger">删除</el-button>
-        <el-button type="primary">导出</el-button>
+        <el-button @click="exportCsv" type="primary">导出</el-button>
       </el-button-group>
     </el-col>
   </el-row>
@@ -509,6 +509,44 @@ function paymentAddSubmit(){
         type:"error",
         message:"添加记录失败"
       });
+    }
+  });
+}
+// 导出为CSV
+function exportCsv(){
+
+  axios.get("http://localhost:9090/orders/list").then(res=>{
+    if(res.data.code == '200'){
+      const header =  ["订单编号", "客户" , "零件号", "品名/规格" , "工序" , "类型" , "单价" ,"数量" , "总金额" ,"付款状态" ,"付款方式","订单状态","创建时间","付款时间"];
+      const rows = res.data.data.map(row => [
+          row.orderId,
+          row.clientName,
+          row.partNum,
+          row.nameArticle,
+          row.process,
+          row.moldType,
+          row.unitPrice,
+          row.workPieceNum,
+          row.totalAmount,
+          row.paymentStatus,
+          row.payWay,
+          row.status,
+          row.createTime,
+          row.completeTime
+      ]);
+      const csvContent =
+          header.join(",") + "\n" +
+          rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "订单.csv");
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
   });
 }

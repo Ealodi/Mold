@@ -32,7 +32,7 @@
           <el-button @click="clearSearch" type="primary">重置</el-button>
         </el-form-item>
         <el-form-item style="margin-top: 10px;">
-          <el-button type="primary">导出</el-button>
+          <el-button @click="exportCsv" type="primary">导出</el-button>
         </el-form-item>
       </el-form>
     </el-col>
@@ -224,6 +224,36 @@ function loadClients(){
       clients.value = res.data.data;
     }
   })
+}
+// 导出为CSV
+function exportCsv(){
+
+  axios.get("http://localhost:9090/payment/list?pageNum=1" + "&pageSize=" + total.value).then(res=>{
+    if(res.data.code == '200'){
+      const header =  ["编号", "订单编号" ,"客户姓名", "支付金额", "付款方式", "付款时间"];
+      const rows = res.data.data.map(row => [
+          row.id,
+          row.orderId,
+          row.clientName,
+          row.amount,
+          row.payWay,
+          row.payTime
+      ]);
+      const csvContent =
+          header.join(",") + "\n" +
+          rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "流水.csv");
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  });
 }
 
 
